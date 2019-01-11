@@ -8,7 +8,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <math.h>
- 
+
 /*DEBUG*/
 #define DEBUG 0
 #if DEBUG
@@ -16,23 +16,23 @@
 #else
 #define DUMP_DBL(x)
 #endif
- 
+
 /*Global Variables*/
 #define MAXCHARS 200            /*max number of chars per word*/
 #define MAXQUERYNUMBER 20       /*max number of queries*/
 #define CH_NEWLINE '\n'         /*newline character*/
 #define CH_NULLBYTE '\0'        /*null byte*/
-typedef char word_t[MAXCHARS];  /*an array of chars of 
+typedef char word_t[MAXCHARS];  /*an array of chars of
                                         size MAXCHARS*/
 typedef struct {
     int line_num;
     double scores_num;
     char line_chars[256];
-}info_s_t;                     /*infomation about scores and chars 
+}info_s_t;                     /*infomation about scores and chars
                                 relative to specific line number*/
- 
+
 /****************************************************************/
-  
+
 /* function prototypes */
 int     mygetchar();
 int     is_prefix_match(char [], char []);
@@ -49,26 +49,26 @@ void    do_when_not_newline(int c, int *bytes_count,
                             int *char_index,
                             int stage4_index
                             ,info_s_t stage4_store[]);
-void    do_when_end_of_words(int c, char last_one_char, 
-                            int *end, 
-                            word_t oneword, int len, 
+void    do_when_end_of_words(int c, char last_one_char,
+                            int *end,
+                            word_t oneword, int len,
                             int query_index,
                             int *words_count,
                             word_t query_words[],
                             int each_quert_matched_per_line[]);
 void    do_when_start_of_words(int *end,int c,int *len);
 void    do_add_char_into_words(int c, word_t oneword, int *len);
-void    do_print_stage2_3(int line, int bytes_count, 
+void    do_print_stage2_3(int line, int bytes_count,
                             int words_count, double score,
                             int *newline);
 void    put_new_line(int *newline, int c);
 /****************************************************************/
-  
+
 /* main program controls all the action
 */
 int
 main(int argc, char *argv[]) {
-    int query_index,len=0,c,bytes_count=0, words_count=0, 
+    int query_index,len=0,c,bytes_count=0, words_count=0,
         line=1,end=0,stage4_index=0,char_index=0,
         each_quert_matched_per_line[MAXQUERYNUMBER] = {0},
         newline=0;
@@ -87,7 +87,7 @@ main(int argc, char *argv[]) {
         /*non-newline char, count bytes and store
          its char then print out the char*/
         do_when_not_newline(c,&bytes_count,&char_index,
-                            stage4_index,stage4_store);     
+                            stage4_index,stage4_store);
         /*determine if it is the end of the word*/
         do_when_end_of_words(c, last_one_char, &end, oneword, len,
             query_index, &words_count, query_words,
@@ -100,7 +100,7 @@ main(int argc, char *argv[]) {
                                     &end,&len,&char_index);
         /*non-blank line, generate an output*/
         }else if (c == CH_NEWLINE && bytes_count) {
-            score = score_per_line(each_quert_matched_per_line, 
+            score = score_per_line(each_quert_matched_per_line,
                                     query_index, words_count);
             stage4_store[stage4_index].line_chars[char_index]
                                 =CH_NULLBYTE;
@@ -115,7 +115,7 @@ main(int argc, char *argv[]) {
                 do_sort_stage4(stage4_store,stage4_index);
             }else if (score && 0<=stage4_index
                              && stage4_index<=4) {
-                /*when there are less or equal than 5 info, 
+                /*when there are less or equal than 5 info,
                     just add in and sort*/
                 stage4_store[stage4_index].line_num=line;
                 stage4_store[stage4_index].scores_num=score;
@@ -127,7 +127,7 @@ main(int argc, char *argv[]) {
                                 &newline);
             DUMP_DBL(score);
             do_reset(&line,&score,&bytes_count,
-                &words_count,&end,&len,&char_index);    
+                &words_count,&end,&len,&char_index);
         }
         last_one_char=c;
         /*add letter and digit into word*/
@@ -173,14 +173,14 @@ is_prefix_match(char query[], char word[]) {
 */
 
 double
-score_per_line(int num_match_per_query[], int k, 
+score_per_line(int num_match_per_query[], int k,
                         int words_count) {
     /*Sum is the numerator part*/
     int i;
     double Sum=0, denominator, result;
     for (i=0;i<k;i++) {
         Sum += log(num_match_per_query[i]+1.0)/log(2);
-        num_match_per_query[i]=0;   
+        num_match_per_query[i]=0;
     }
     denominator = log(8.5 + words_count)/log(2.0);
     result = Sum/denominator;
@@ -196,7 +196,7 @@ stage1(int argc, char* argv[], word_t query_words[]) {
     int i,j,k=0,valid=1, invalid_query_index;
     if (argc<=1) {
         /*no input query, exit.*/
-        printf("S1: No query specified, :");
+        printf("S1: No query specified, ");
         printf("must provide at least one word\n");
         exit(EXIT_FAILURE);
     }
@@ -210,9 +210,9 @@ stage1(int argc, char* argv[], word_t query_words[]) {
     for (i=1;i < argc; i++) {
         for (j=0; j < strlen(argv[i]); j++) {
             /*now, check if all query is lowercase*/
-            if (isupper(argv[i][j]) == 1 || 
+            if (isupper(argv[i][j]) == 1 ||
                 (!isalpha(argv[i][j]) && !isdigit(argv[i][j]))){
-                /*if query is invalid, 
+                /*if query is invalid,
                     record its index and stop the loop*/
                 valid=0;
                 invalid_query_index = i;
@@ -258,9 +258,9 @@ do_print_stage4(info_s_t A[], int index) {
 }
 
 /****************************************************************/
-/*sort the infomation in A according to its score 
+/*sort the infomation in A according to its score
 */
-void 
+void
 do_sort_stage4(info_s_t A[], int index) {
     int i,j;
     for (i=1;i<index;i++){
@@ -305,7 +305,7 @@ do_compare_on_stage4(info_s_t A[], int index){
 
 /*reset all value to 0 except line
 */
-void    
+void
 do_reset(int *line,double *score, int *bytes_count,
     int *words_count,int *end,int *len, int *char_index){
         int i;
@@ -337,7 +337,7 @@ put_new_line(int *newline, int c){
 *print out the char
 *store it and count byte
 */
-void 
+void
 do_when_not_newline(int c, int *bytes_count,int *char_index,
                         int stage4_index,info_s_t stage4_store[]){
     int i,k;
@@ -359,18 +359,18 @@ do_when_not_newline(int c, int *bytes_count,int *char_index,
 */
 
 void
-do_when_end_of_words(int c, char last_one_char, int *end, 
+do_when_end_of_words(int c, char last_one_char, int *end,
                     word_t oneword, int len, int query_index,
                     int *words_count, word_t query_words[],
                     int each_quert_matched_per_line[]){
     int n,i;
-    if ((!isalpha(c) && !isdigit(c)) && 
+    if ((!isalpha(c) && !isdigit(c)) &&
         (isalpha(last_one_char) || isdigit(last_one_char)) ){
         *end=1;
         /*now it's start of a new word,put a null byte there.*/
         oneword[len] = CH_NULLBYTE;
         for (n=0;n<query_index;n++) {
-            each_quert_matched_per_line[n] += 
+            each_quert_matched_per_line[n] +=
             is_prefix_match(query_words[n], oneword);
         }
         i=*words_count+1;
@@ -405,7 +405,7 @@ do_add_char_into_words(int c, word_t oneword, int *len){
         oneword[*len] = c;
         i=*len+1;
         *len=i;
-    } 
+    }
 }
 
 /****************************************************************/
@@ -413,13 +413,13 @@ do_add_char_into_words(int c, word_t oneword, int *len){
 /*print out stage2&3
 */
 
-void    
+void
 do_print_stage2_3(int line, int bytes_count, int words_count,
                     double score, int *newline){
-    printf("\nS2: line = %d, bytes = %d, words = %d\n", 
+    printf("\nS2: line = %d, bytes = %d, words = %d\n",
             line, bytes_count, words_count);
     printf("S3: line = %d, score = %.3lf \n", line, score );
     printf("---");
     *newline=1;
 }
-/*Algorithms are fun,sir!*/.
+/*Algorithms are fun, sir!*/
