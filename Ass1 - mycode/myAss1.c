@@ -216,7 +216,13 @@ stage1(int argc, char* argv[], word_t query_words[]) {
                     record its index and stop the loop*/
                 valid=0;
                 invalid_query_index = i;
-                break;
+                break;                                                          // Bug #1 - logic error
+                                                                                // Date: 2019-01-12 eve.
+                                                                                // I suppose to caputure the first
+                                                                                // invalid query, however, in reality
+                                                                                // I caputure the last invalid query.
+                                                                                // Because, I put the keyword "break"
+                                                                                // into the wrong scope
             }
         }
     }
