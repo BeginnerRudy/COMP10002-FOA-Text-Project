@@ -52,6 +52,14 @@ typedef char word_t[MAX_CHARS_PER_WORD];
 // The bool type is an int that indicate boolean
 typedef int bool;
 
+typedef struct{
+    char **line;
+    int byte_count;
+    int word_count;
+    int line_index;
+    double score;
+}line_t;
+
 /**Define the function prototypes*********************************************/
 
 /*This function is responsible for all the activity of stage1, TRUE means
@@ -63,16 +71,10 @@ bool does_a_word_contain_uppercase(word_t word);
 // Add a newline to the print out content
 void add_a_new_line_char();
 /*This function is responsible for all the activity of stage2.*/
-void stage2(char*** text);
+line_t* stage2();
 /*This function grap a word from the text and assign it to the argument var*/
 /*Then, it returns the last char it read.*/
 char getword(word_t word);
-/*This function read a word into a char**/
-void read_into_word(char* place_to_store, word_t word, int *word_count_for_curr_line);
-/*This function response for updatinf the number of lines in the test*/
-void update_line_count(char last_char_read_by_getword, int *line_count,
-                            int *word_count_for_curr_line, char **line);
-
 
 void print_line(char** line){
     int word_count = 0;
@@ -97,14 +99,16 @@ void print_text(char*** text){
 /***************The main function started*************************************/
 int
 main(int argc, char *argv[]) {
-    char ***text = (char***)malloc(INITIAL_NUMBER_OF_LINE * sizeof(char***));
+    // A text is an array of variables of type line_t.
+    line_t *text;
 
     if (!stage1(argc, argv)){
         exit(EXIT_FAILURE);
     }
 
-    stage2(text);
-    printf("%s\n", text[0][0]);
+    text = stage2();
+    text[0].byte_count;
+    // printf("%s\n", text[0][0]);
     // print_text(text);
     return 0;
 }
@@ -156,46 +160,12 @@ void add_a_new_line_char(){
     printf("\n");
 }
 
-void stage2(char*** text){
-    word_t a_word;
-    char last_char_read_by_getword;
-    int line_count = 0, word_count_for_curr_line = 0,
-    curr_max_line_hold = INITIAL_NUMBER_OF_LINE,
-    curr_max_word_hold = INITIAL_NUMBER_OF_WORDS_PER_LINE;
+line_t* stage2(){
+    line_t local_text;
 
-    text[line_count] = (char**)malloc(INITIAL_NUMBER_OF_WORDS_PER_LINE * sizeof(char**));
+    local_text.byte_count = 10;
 
-    last_char_read_by_getword = getword(a_word);
-
-    text[line_count][word_count_for_curr_line] = (char*)malloc(INITIAL_NUMBER_OF_CHARS * sizeof(char*));
-    read_into_word(text[line_count][word_count_for_curr_line], a_word, &word_count_for_curr_line);
-
-    update_line_count(last_char_read_by_getword, &line_count, &word_count_for_curr_line,
-                        text[line_count]);
-
-    while (last_char_read_by_getword != EOF){
-        last_char_read_by_getword = getword(a_word);
-
-        update_line_count(last_char_read_by_getword, &line_count, &word_count_for_curr_line,
-                            text[line_count]);
-
-        //check whether needs to reallocate memory for text
-        if (line_count >= curr_max_line_hold){
-            curr_max_line_hold += INITIAL_NUMBER_OF_LINE;
-            text = (char ***)realloc(text, curr_max_line_hold*sizeof(char***));
-        }
-
-        //check whether needs to reallocate memory for current line
-        if (word_count_for_curr_line >= curr_max_word_hold){
-            curr_max_word_hold += INITIAL_NUMBER_OF_WORDS_PER_LINE;
-            text[line_count] = (char **)realloc(text[line_count],
-                                        curr_max_word_hold*sizeof(char**));
-        }
-
-        read_into_word(text[line_count][word_count_for_curr_line], a_word, &word_count_for_curr_line);
-    }
-
-    text[line_count] = NULL;
+    return &local_text;
 }
 
 char getword(word_t word){
@@ -224,32 +194,4 @@ char getword(word_t word){
     word[count] = NULL_BYTE;
 
     return c;
-}
-
-void read_into_word(char* place_to_store, word_t word, int *word_count_for_curr_line){
-    int char_count = 0, curr_max_char_hold = INITIAL_NUMBER_OF_CHARS;
-
-    while (word[char_count] != NULL_BYTE){
-        // Check whether needs to realocate the array
-        if (char_count >= curr_max_char_hold){
-            curr_max_char_hold += INITIAL_NUMBER_OF_CHARS;
-            place_to_store = (char *)realloc(place_to_store, curr_max_char_hold * sizeof(char*));
-        }
-
-        // Append the char
-        place_to_store[char_count] = word[char_count];
-        char_count++;
-    }
-
-    place_to_store[char_count] = NULL_BYTE;
-    word_count_for_curr_line++;
-}
-
-void update_line_count(char last_char_read_by_getword, int *line_count,
-                                int *word_count_for_curr_line, char **line){
-    if (last_char_read_by_getword == NEWLINE){
-        *line_count++;
-        line[*word_count_for_curr_line] = NULL;
-        *word_count_for_curr_line = 0;
-    }
 }
