@@ -36,7 +36,7 @@ stdlib.h provides {
 #define MAX_CHARS_PER_WORD 50
 #define NULL_BYTE '\0'
 #define NEWLINE '\n'
-#define INITIAL_NUMBER_OF_WORDS_PER_LINE 10
+#define INITIAL_NUMBER_OF_WORDS_PER_LINE 100
 #define INITIAL_NUMBER_OF_LINE 10
 #define INITIAL_NUMBER_OF_CHARS 3
 // Define alias, TRUE for 1 as well as FALSE for 0.
@@ -74,25 +74,30 @@ void add_a_new_line_char();
 line_t* stage2();
 /*This function grap a word from the text and assign it to the argument var*/
 /*Then, it returns the last char it read.*/
-char getword(word_t word);
+char getword(line_t* line, int *word_count, int *byte_count);
 
-void print_line(char** line){
-    int word_count = 0;
-    printf("[ ");
-    while (line[word_count] != NULL){
-        printf("%s, ", line[word_count++]);
-    }
-    printf("]\n");
-}
+line_t line_linitializer(int line_count);
+void line_update(char last_char_read_by_getword, int *word_count,
+                int *byte_count, int *line_index, int *curr_max_word_hold,
+                line_t **local_text);
 
-void print_text(char*** text){
-    int line_count = 0;
-    printf("[\n");
-    while (text[line_count] != NULL){
-        print_line(text[line_count++]);
-    }
-    printf("]\n");
-}
+// void print_line(char** line){
+//     int word_count = 0;
+//     printf("[ ");
+//     while (line[word_count] != NULL){
+//         printf("%s, ", line[word_count++]);
+//     }
+//     printf("]\n");
+// }
+//
+// void print_text(line_t *text){
+//     int line_count = 0;
+//     printf("[\n");
+//     while (text[line_count] != NULL){
+//         print_line(text[line_count++]);
+//     }
+//     printf("]\n");
+// }
 
 
 
@@ -106,10 +111,13 @@ main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    // Let stage2 do the job of reading text and do some statistics
     text = stage2();
-    text[0].byte_count;
-    // printf("%s\n", text[0][0]);
-    // print_text(text);
+
+    printf("%d\n", text[0].line_index);
+    printf("%d\n", text[0].word_count);
+    printf("%d\n", text[0].byte_count);
+    printf("%s\n", text[0].line[0]);
     return 0;
 }
 
@@ -161,37 +169,115 @@ void add_a_new_line_char(){
 }
 
 line_t* stage2(){
-    line_t local_text;
+    line_t *local_text = (line_t*)malloc(INITIAL_NUMBER_OF_LINE*sizeof(line_t*));
+    int curr_max_line_hold = INITIAL_NUMBER_OF_LINE,
+        curr_max_word_hold = INITIAL_NUMBER_OF_WORDS_PER_LINE,
+        line_count = 0, word_count = 0, byte_count = 0;
+    char last_char_read_by_getword;
 
-    local_text.byte_count = 10;
+    local_text[line_count] = line_linitializer(line_count);
+    last_char_read_by_getword = getword(&local_text[line_count], &word_count, &byte_count);
+    line_update(last_char_read_by_getword, &word_count, &byte_count, &line_count,
+         &curr_max_word_hold, &local_text);
 
-    return &local_text;
-}
+    while (last_char_read_by_getword != EOF){
+        // decide weather to reallocate for a line inside a line_t
+        if (word_count >= curr_max_word_hold){
+            curr_max_word_hold += INITIAL_NUMBER_OF_WORDS_PER_LINE;
+            local_text[line_count].line = (char**)realloc(local_text[line_count].line,
+                                                            curr_max_word_hold*sizeof(char**));
+        }
 
-char getword(word_t word){
-    char c;
-    int count = 0;
-
-    // skip the non-alpabetic chars
-    // once meet the EOF, stop the loop
-    while (!isalpha(c=getchar()) && c != EOF && c != NEWLINE) {
+        last_char_read_by_getword = getword(&local_text[line_count], &word_count, &byte_count);
+        line_update(last_char_read_by_getword, &word_count, &byte_count, &line_count,
+             &curr_max_word_hold, &local_text);
     }
 
-    // if it is the end of the file, stop the function
+    printf("\n\n%s\n\n", local_text[0].line[0]);
+
+    // local_text[line_count] = NULL;
+    return local_text;
+}
+
+void line_update(char last_char_read_by_getword, int *word_count,
+                int *byte_count, int *line_index, int* curr_max_word_hold,
+                line_t **local_text){
+    if (last_char_read_by_getword == NEWLINE){
+        //assign final value to current line
+        (*local_text)[*line_index].word_count = *word_count;
+        (*local_text)[*line_index].byte_count = *byte_count;
+
+        //reset all values to zero while increment line index and allocate a new line
+        *word_count = *byte_count = 0;
+        *curr_max_word_hold = INITIAL_NUMBER_OF_WORDS_PER_LINE;
+        *line_index++;
+
+
+
+        (*local_text)[*line_index] = line_linitializer(*line_index);
+    }
+}
+
+char getword(line_t* line, int *word_count, int *byte_count){
+    char c;
+    int char_count = 0, curr_max_char_hold = INITIAL_NUMBER_OF_CHARS;
+    // allocate the place to store word
+    line->line[*word_count] = (char*)malloc(INITIAL_NUMBER_OF_CHARS * sizeof(char*));
+
+    // skip the non-alpabetic chars
+    // once meet the EOF or newline char, stop the loop
+    while (!isalpha(c=getchar()) && c != EOF && c != NEWLINE) {
+        printf("%c", c);
+        *byte_count += 1;
+    }
+
+    // if it is the end of the file or a line, stop the function
     if (c == EOF || c == NEWLINE){
+        printf("%c", c);
+        *byte_count++;
         return c;
     }
 
     // Append the 1st char to word
-    word[count++] = c;
+    printf("%c", c);
+    *byte_count++;
+    line->line[*word_count][char_count++] = c;
 
     // Keep reading
     while (isalpha(c = getchar())){
-        word[count++] = c;
+        // decide wheather to reallocate memory
+        if (char_count >= curr_max_char_hold){
+            curr_max_char_hold += INITIAL_NUMBER_OF_CHARS;
+            line->line[*word_count] = (char*)realloc(line->line[*word_count], curr_max_char_hold);
+        }
+        printf("%c", c);
+        *byte_count++;
+        line->line[*word_count][char_count++] = c;
+    }
+
+    printf("%c", c);
+    *byte_count++;
+    // decide wheather to reallocate memory for NULL byte
+    if (char_count >= curr_max_char_hold){
+        curr_max_char_hold ++;
+        line->line[*word_count] = (char*)realloc(line->line[*word_count], curr_max_char_hold);
     }
 
     // Append NULL byte at last
-    word[count] = NULL_BYTE;
+    line->line[*word_count][char_count] = NULL_BYTE;
+    *word_count++;
 
     return c;
+}
+
+line_t line_linitializer(int line_count){
+    // declare and allocate a line
+    line_t line;
+    line.word_count = 0;
+    line.byte_count = 0;
+    line.score = 0.0;
+    line.line_index = line_count;
+    line.line = (char**)malloc(INITIAL_NUMBER_OF_WORDS_PER_LINE * sizeof(char**));
+
+    return line;
 }
