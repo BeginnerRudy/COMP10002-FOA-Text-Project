@@ -43,8 +43,28 @@ stdlib.h provides {
 /**Define new data type and strucTRUE*****************************************/
 
 // The new type word_t is used to storing a word.
-typedef char word_t[MAX_CHARS_PER_WORD];
 typedef int bool;
+
+typedef struct{
+    char* word;
+    int char_count;
+    int curr_max_char_count;
+}word_t;
+
+typedef struct {
+    word_t* words;
+    int line_index;
+    int word_count;
+    int byte_count;
+    int curr_max_word_hold;
+    double socre;
+} line_t;
+
+typedef struct {
+    line_t* lines;
+    int line_count;
+    int curr_max_line_hold;
+} text_t;
 
 /**Define the function prototypes*********************************************/
 
@@ -53,7 +73,7 @@ pass the stage1 successfully, FALSE means failed to pass.*/
 bool stage1(int argc, char *argv[]);
 // This function returns TRUE if word consisted of all lowercase chars,
 // otherwise, return FALSE.
-bool does_contain_uppercase_for_word(word_t word);
+bool does_contain_uppercase_for_word(char word[]);
 // Add a newline to the print out content
 void add_a_new_line_char();
 
@@ -99,7 +119,7 @@ bool stage1(int argc, char *argv[]){
     return TRUE;
 }
 
-bool does_contain_uppercase_for_word(word_t word){
+bool does_contain_uppercase_for_word(char word[]){
     // Check each char in word for whether is it in lowercase, if not
     // returns FALSE.
     for (int i = 0; i < strlen(word); i++){
