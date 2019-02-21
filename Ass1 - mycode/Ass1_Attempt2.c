@@ -39,6 +39,7 @@ stdlib.h provides {
 #define INITIAL_NUMBER_OF_CHAR_PER_WORD 5
 #define NEWLINE '\n'
 #define KEEP_READING 'k'
+#define NULL_BYTE '\0'
 // Define alias, TRUE for 1 as well as FALSE for 0.
 #define TRUE 1
 #define FALSE 0
@@ -72,7 +73,7 @@ typedef struct {
 } text_t;
 
 /**Define the function prototypes*********************************************/
-
+int mygetchar();
 /*This function is responsible for all the activity of stage1, TRUE means
 pass the stage1 successfully, FALSE means failed to pass.*/
 bool stage1(int argc, char *argv[]);
@@ -90,8 +91,11 @@ void update_text(text_t *text);
 // update the line_t variable
 void update_line(line_t *line);
 // read a word of a text into a word_t variable
-char read_by_word(word_t* word);
-
+char read_by_word(word_t* word, int *byte_count, int *word_count);
+void print_line_summary(int line_index, int word_count, int byte_count);
+void stage_separation(){
+    printf("\n==========================================================================\n\n");
+}
 /***************The main function started*************************************/
 int
 main(int argc, char *argv[]) {
@@ -102,11 +106,14 @@ main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    stage_separation();
+
     // run stage 2
     text = stage2();
 
-    printf("%d\n", text.curr_max_line_hold);
-    printf("%d\n", text.lines->word_count   );
+    stage_separation();
+
+    // run stage 3
     return 0;
 }
 
@@ -116,36 +123,40 @@ text_t stage2(){
     // initialize text
     text.line_index = 0;
     text.curr_max_line_hold = INITIAL_NUMBER_OF_LINE_PER_TEXT;
-    text.lines = (line_t*)malloc(INITIAL_NUMBER_OF_LINE_PER_TEXT * sizeof(line_t*));
+    text.lines = (line_t*)malloc(INITIAL_NUMBER_OF_LINE_PER_TEXT * sizeof(line_t));
 
-
-    //keep reading words into text line by line, till the end of a file
+    // //keep reading words into text line by line, till the end of a file
     while ((flag_of_line = read_by_line(&text.lines[text.line_index], text.line_index)) != EOF){
-        /*if we finish reading a line, then we need to create a new line*/
-        if (flag_of_line == NEWLINE){
-            // update text to move to the reading task of next line
+    //     /*if we finish reading a line, then we need to create a new line*/
+    //     if (flag_of_line == NEWLINE){
+    //         // update text to move to the reading task of next line
+
+            print_line_summary( text.lines[text.line_index].line_index ,
+                                text.lines[text.line_index].word_count,
+                                text.lines[text.line_index].byte_count);
             update_text(&text);
-       }
+    //    }
     }
 
     return text;
 }
 
 char read_by_line(line_t* line, int line_index){
+
     // initialize this line
     line->line_index = line_index + 1;
     line->word_count = 0;
     line->byte_count = 0;
     line->curr_max_word_hold = INITIAL_NUMBER_OF_WORD_PER_LINE;
     line->score = 0.0;
-    line->words = (word_t*)malloc(INITIAL_NUMBER_OF_WORD_PER_LINE * sizeof(word_t*));
+    line->words = (word_t*)malloc(INITIAL_NUMBER_OF_WORD_PER_LINE * sizeof(word_t));
 
     //local variable
     char flag_of_word;
 
     // keep reading words into line word by word, till meet a newline char
-    while ((flag_of_word = read_by_word(&line->words[line->word_count])) != NEWLINE
-            && flag_of_word != EOF){
+    while ((flag_of_word = read_by_word(&line->words[line->word_count],
+         &line->byte_count, &line->word_count)) == KEEP_READING){
         // update line statistics and line->words memory
         update_line(line);
     }
@@ -153,31 +164,77 @@ char read_by_line(line_t* line, int line_index){
     return flag_of_word;
 }
 
-void update_line(line_t *line){
-    line->word_count++;
-
-    // check memory
-    if (line->word_count >= line->curr_max_word_hold){
-        line->curr_max_word_hold += INITIAL_NUMBER_OF_WORD_PER_LINE;
-        line->words = (word_t*)realloc(line->words,
-                                line->curr_max_word_hold * sizeof(word_t*));
-    }
-}
-
-char read_by_word(word_t* word){
-    return EOF;
-}
-
 void update_text(text_t *text){
     // increase the number of line stored in text
-    text->line_index++;
+    (*text).line_index = (*text).line_index+1;
 
     //check whether need to expand memory for allocating new line
     if (text->line_index >= text->curr_max_line_hold){
         text->curr_max_line_hold += INITIAL_NUMBER_OF_LINE_PER_TEXT;
         text->lines = (line_t*)realloc(text->lines,
-                                        text->curr_max_line_hold * sizeof(line_t*));
+            text->curr_max_line_hold * sizeof(line_t));
     }
+}
+
+void update_line(line_t *line){
+
+    // check memory
+    if (line->word_count >= line->curr_max_word_hold){
+        line->curr_max_word_hold += INITIAL_NUMBER_OF_WORD_PER_LINE;
+        line->words = (word_t*)realloc(line->words,
+                                line->curr_max_word_hold * sizeof(word_t));
+    }
+}
+
+char read_by_word(word_t* word, int *byte_count, int *word_count){
+    char c;
+
+    //skip non-alpabetic chars
+    while ((c = mygetchar()) != EOF && c != NEWLINE && !isalpha(c)) {
+        *byte_count = *byte_count + 1;
+        printf("%c", c);
+    }
+
+    if (c == EOF || c == NEWLINE){
+        printf("%c", c);
+        return c;
+    }
+
+    //there is a word captured
+    //initialize a word
+    word->char_count = 0;
+    word->curr_max_char_count = INITIAL_NUMBER_OF_CHAR_PER_WORD;
+    word->word = (char*)malloc(INITIAL_NUMBER_OF_CHAR_PER_WORD * sizeof(char));
+
+    //append the first char
+    printf("%c", c);
+    word->word[word->char_count++] = c;
+    *byte_count = *byte_count + 1;
+
+    while (isalpha(c = mygetchar()) && c != NEWLINE){
+        //check is there is enough memory for char
+        if (word->char_count >= word->curr_max_char_count){
+            word->curr_max_char_count += INITIAL_NUMBER_OF_CHAR_PER_WORD;
+            word->word = (char*)realloc(word->word,
+                                        word->curr_max_char_count * sizeof(char));
+        }
+
+        printf("%c", c);
+        word->word[word->char_count++] = c;
+        *byte_count = *byte_count + 1;
+    }
+
+    word->word[word->char_count++] = NULL_BYTE;
+    *word_count = *word_count + 1;
+    printf("%c", c);
+    *byte_count = *byte_count + 1;
+
+    if (c == NEWLINE){
+        return c;
+    }
+
+
+    return KEEP_READING;
 }
 
 bool stage1(int argc, char *argv[]){
@@ -224,4 +281,16 @@ bool does_contain_uppercase_for_word(char word[]){
 
 void add_a_new_line_char(){
     printf("\n");
+}
+
+/*the offcial mygetchar()*/
+int mygetchar() {
+    int c;
+    while ((c=getchar())=='\r') {
+    }
+    return c;
+}
+
+void print_line_summary(int line_index, int word_count, int byte_count){
+    printf("S2: line = %d, bytes = %d, words = %d\n", line_index,byte_count, word_count);
 }
