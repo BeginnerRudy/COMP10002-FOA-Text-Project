@@ -62,7 +62,7 @@ typedef struct {
     int word_count;
     int byte_count;
     int curr_max_word_hold;
-    double socre;
+    double score;
 } line_t;
 
 typedef struct {
@@ -84,11 +84,13 @@ void add_a_new_line_char();
 // response for stage2;
 text_t stage2();
 // read the line of a text into a line_t variable
-char read_into_line(line_t** line);
+char read_by_line(line_t* line, int line_index);
 // update the text_t variable
 void update_text(text_t *text);
+// update the line_t variable
+void update_line(line_t *line);
 // read a word of a text into a word_t variable
-char read_into_word(word_t** word);
+char read_by_word(word_t* word);
 
 /***************The main function started*************************************/
 int
@@ -104,6 +106,7 @@ main(int argc, char *argv[]) {
     text = stage2();
 
     printf("%d\n", text.curr_max_line_hold);
+    printf("%d\n", text.lines->word_count   );
     return 0;
 }
 
@@ -116,8 +119,8 @@ text_t stage2(){
     text.lines = (line_t*)malloc(INITIAL_NUMBER_OF_LINE_PER_TEXT * sizeof(line_t*));
 
 
-    //keep reading words into line, till the end of a file
-    while ((flag_of_line = read_into_line(&text.lines)) != EOF){
+    //keep reading words into text line by line, till the end of a file
+    while ((flag_of_line = read_by_line(&text.lines[text.line_index], text.line_index)) != EOF){
         /*if we finish reading a line, then we need to create a new line*/
         if (flag_of_line == NEWLINE){
             // update text to move to the reading task of next line
@@ -128,7 +131,40 @@ text_t stage2(){
     return text;
 }
 
-char read_into_line(line_t** line){
+char read_by_line(line_t* line, int line_index){
+    // initialize this line
+    line->line_index = line_index + 1;
+    line->word_count = 0;
+    line->byte_count = 0;
+    line->curr_max_word_hold = INITIAL_NUMBER_OF_WORD_PER_LINE;
+    line->score = 0.0;
+    line->words = (word_t*)malloc(INITIAL_NUMBER_OF_WORD_PER_LINE * sizeof(word_t*));
+
+    //local variable
+    char flag_of_word;
+
+    // keep reading words into line word by word, till meet a newline char
+    while ((flag_of_word = read_by_word(&line->words[line->word_count])) != NEWLINE
+            && flag_of_word != EOF){
+        // update line statistics and line->words memory
+        update_line(line);
+    }
+
+    return flag_of_word;
+}
+
+void update_line(line_t *line){
+    line->word_count++;
+
+    // check memory
+    if (line->word_count >= line->curr_max_word_hold){
+        line->curr_max_word_hold += INITIAL_NUMBER_OF_WORD_PER_LINE;
+        line->words = (word_t*)realloc(line->words,
+                                line->curr_max_word_hold * sizeof(word_t*));
+    }
+}
+
+char read_by_word(word_t* word){
     return EOF;
 }
 
