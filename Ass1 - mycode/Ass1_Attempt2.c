@@ -122,54 +122,9 @@ main(int argc, char *argv[]) {
 }
 
 
-bool stage1(int argc, char *argv[]){
-    // If there is no arg inputed, response the error message to the user
-    if (argc-THE_START_INDEX_OF_QUERY == 0){
-         // minus THE_START_INDEX_OF_QUERY, since the first arg is this file's filename.
-        printf("S1: No query specified, must provide at least one word\n");
-        return FALSE;
-    }
-
-
-    // Display all the qurey in the required format.
-    printf("S1: query = ");
-    for (int i = THE_START_INDEX_OF_QUERY; i < argc; i++){
-        printf("%s ", argv[i]);
-    }
-    add_a_new_line_char();
-
-    // Check if all words of the args are all in lowercase by a for-loop,
-    // if not responses an error message and returns FALSE
-    for (int i = THE_START_INDEX_OF_QUERY; i < argc; i++){
-        if (does_a_word_contain_uppercase(argv[i]) == TRUE){
-            printf("S1: %s: invalid character(s) in query\n", argv[i]);
-            return FALSE;
-        }
-    }
-
-    // Pass all the two test, return TRUE, good!
-    return TRUE;
-}
-
-bool does_a_word_contain_uppercase(word_t word){
-    // Check each char in word for whether is it in lowercase, if not
-    // returns FALSE.
-    for (int i = 0; i < strlen(word); i++){
-        if (!islower(word[i])){
-            return TRUE;
-        }
-    }
-
-    // All chars are in lowercase, returns TRUE!
-    return FALSE;
-}
-
-void add_a_new_line_char(){
-    printf("\n");
-}
 
 line_t* stage2(){
-    line_t *local_text = (line_t*)malloc(INITIAL_NUMBER_OF_LINE*sizeof(line_t*));
+    line_t *local_text = (line_t*)malloc(INITIAL_NUMBER_OF_LINE*sizeof(line_t));
     int curr_max_line_hold = INITIAL_NUMBER_OF_LINE,
         curr_max_word_hold = INITIAL_NUMBER_OF_WORDS_PER_LINE,
         line_count = 0, word_count = 0, byte_count = 0;
@@ -185,7 +140,7 @@ line_t* stage2(){
         if (word_count >= curr_max_word_hold){
             curr_max_word_hold += INITIAL_NUMBER_OF_WORDS_PER_LINE;
             local_text[line_count].line = (char**)realloc(local_text[line_count].line,
-                                                            curr_max_word_hold*sizeof(char**));
+                                                            curr_max_word_hold*sizeof(char*));
         }
 
         last_char_read_by_getword = getword(&local_text[line_count], &word_count, &byte_count);
@@ -222,7 +177,7 @@ char getword(line_t* line, int *word_count, int *byte_count){
     char c;
     int char_count = 0, curr_max_char_hold = INITIAL_NUMBER_OF_CHARS;
     // allocate the place to store word
-    line->line[*word_count] = (char*)malloc(INITIAL_NUMBER_OF_CHARS * sizeof(char*));
+    line->line[*word_count] = (char*)malloc(INITIAL_NUMBER_OF_CHARS * sizeof(char));
 
     // skip the non-alpabetic chars
     // once meet the EOF or newline char, stop the loop
@@ -277,7 +232,53 @@ line_t line_linitializer(int line_count){
     line.byte_count = 0;
     line.score = 0.0;
     line.line_index = line_count;
-    line.line = (char**)malloc(INITIAL_NUMBER_OF_WORDS_PER_LINE * sizeof(char**));
+    line.line = (char**)malloc(INITIAL_NUMBER_OF_WORDS_PER_LINE * sizeof(char*));
 
     return line;
+}
+
+bool stage1(int argc, char *argv[]){
+    // If there is no arg inputed, response the error message to the user
+    if (argc-THE_START_INDEX_OF_QUERY == 0){
+        // minus THE_START_INDEX_OF_QUERY, since the first arg is this file's filename.
+        printf("S1: No query specified, must provide at least one word\n");
+        return FALSE;
+    }
+
+
+    // Display all the qurey in the required format.
+    printf("S1: query = ");
+    for (int i = THE_START_INDEX_OF_QUERY; i < argc; i++){
+        printf("%s ", argv[i]);
+    }
+    add_a_new_line_char();
+
+    // Check if all words of the args are all in lowercase by a for-loop,
+    // if not responses an error message and returns FALSE
+    for (int i = THE_START_INDEX_OF_QUERY; i < argc; i++){
+        if (does_a_word_contain_uppercase(argv[i]) == TRUE){
+            printf("S1: %s: invalid character(s) in query\n", argv[i]);
+            return FALSE;
+        }
+    }
+
+    // Pass all the two test, return TRUE, good!
+    return TRUE;
+}
+
+bool does_a_word_contain_uppercase(word_t word){
+    // Check each char in word for whether is it in lowercase, if not
+    // returns FALSE.
+    for (int i = 0; i < strlen(word); i++){
+        if (!islower(word[i])){
+            return TRUE;
+        }
+    }
+
+    // All chars are in lowercase, returns TRUE!
+    return FALSE;
+}
+
+void add_a_new_line_char(){
+    printf("\n");
 }
