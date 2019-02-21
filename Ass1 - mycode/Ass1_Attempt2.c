@@ -34,6 +34,11 @@ stdlib.h provides {
 
 // A word from the input could have up to 200 chars
 #define MAX_CHARS_PER_WORD 50
+#define INITIAL_NUMBER_OF_LINE_PER_TEXT 5
+#define INITIAL_NUMBER_OF_WORD_PER_LINE 5
+#define INITIAL_NUMBER_OF_CHAR_PER_WORD 5
+#define NEWLINE '\n'
+#define KEEP_READING 'k'
 // Define alias, TRUE for 1 as well as FALSE for 0.
 #define TRUE 1
 #define FALSE 0
@@ -62,7 +67,7 @@ typedef struct {
 
 typedef struct {
     line_t* lines;
-    int line_count;
+    int line_index;
     int curr_max_line_hold;
 } text_t;
 
@@ -76,19 +81,68 @@ bool stage1(int argc, char *argv[]);
 bool does_contain_uppercase_for_word(char word[]);
 // Add a newline to the print out content
 void add_a_new_line_char();
-
+// response for stage2;
+text_t stage2();
+// read the line of a text into a line_t variable
+char read_into_line(line_t** line);
+// update the text_t variable
+void update_text(text_t *text);
+// read a word of a text into a word_t variable
+char read_into_word(word_t** word);
 
 /***************The main function started*************************************/
 int
 main(int argc, char *argv[]) {
+    text_t text;
+
     // run stage 1, if stage1 returns FALSE, terminate this program.
     if (!stage1(argc, argv)){
         exit(EXIT_FAILURE);
     }
 
+    // run stage 2
+    text = stage2();
+
+    printf("%d\n", text.curr_max_line_hold);
     return 0;
 }
 
+text_t stage2(){
+    text_t text;
+    char flag_of_line;
+    // initialize text
+    text.line_index = 0;
+    text.curr_max_line_hold = INITIAL_NUMBER_OF_LINE_PER_TEXT;
+    text.lines = (line_t*)malloc(INITIAL_NUMBER_OF_LINE_PER_TEXT * sizeof(line_t*));
+
+
+    //keep reading words into line, till the end of a file
+    while ((flag_of_line = read_into_line(&text.lines)) != EOF){
+        /*if we finish reading a line, then we need to create a new line*/
+        if (flag_of_line == NEWLINE){
+            // update text to move to the reading task of next line
+            update_text(&text);
+       }
+    }
+
+    return text;
+}
+
+char read_into_line(line_t** line){
+    return EOF;
+}
+
+void update_text(text_t *text){
+    // increase the number of line stored in text
+    text->line_index++;
+
+    //check whether need to expand memory for allocating new line
+    if (text->line_index >= text->curr_max_line_hold){
+        text->curr_max_line_hold += INITIAL_NUMBER_OF_LINE_PER_TEXT;
+        text->lines = (line_t*)realloc(text->lines,
+                                        text->curr_max_line_hold * sizeof(line_t*));
+    }
+}
 
 bool stage1(int argc, char *argv[]){
     // If there is no arg inputed, response the error message to the user
