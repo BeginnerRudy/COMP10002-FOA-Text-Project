@@ -2,7 +2,26 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include <math.h>
+
+/**
+string.h provides {
+                    1. strlen() for calculating the length of a word.
+                    }
+*/
+
+/**
+ctype.h provides {
+                    1. islower() for deciding whether a char is in lowercase.
+                    }
+*/
+
+/**
+stdlib.h provides {
+                    1. exit(EXIT_FAILURE) for exiting the program.
+                    }
+*/
+
+
 
 #define DEBUG 1
 #if DEBUG
@@ -77,11 +96,6 @@ void print_line_summary(int line_index, int word_count, int byte_count);
 void stage_separation(){
     printf("\n==========================================================================\n\n");
 }
-void stage3(text_t *text, int query_num, char* queries[]);
-double score_a_line(int num_of_word_in_a_line, int queries_match_count[], int query_size);
-void calculating_statistics_for_scoring(int queries_match_count[], int query_num, char *queries[], line_t line);
-int count_query_match(char *query, line_t line);
-bool is_prefix_matched(char *query, char *word);
 /***************The main function started*************************************/
 int
 main(int argc, char *argv[]) {
@@ -100,70 +114,7 @@ main(int argc, char *argv[]) {
     stage_separation();
 
     // run stage 3
-    stage3(&text, argc, argv);
-
     return 0;
-}
-
-void stage3(text_t *text, int query_num, char* queries[]){
-    //scoring line by line
-    for (int curr_line_index = 0; curr_line_index < text->line_index; curr_line_index++){
-        // calculating the statistics for scoring
-        int queries_match_count[query_num - 1];
-        calculating_statistics_for_scoring(queries_match_count, query_num, queries, text->lines[curr_line_index]);
-
-        //score curr line
-        text->lines[curr_line_index].score = score_a_line(text->lines[curr_line_index].word_count,
-                                                            queries_match_count, query_num - 1);
-    }
-}
-
-double score_a_line(int num_of_word_in_a_line, int queries_match_count[], int query_size){
-    double score = 0.0;
-
-    for (int i = 0; i < query_size; i++){
-        score += log(1.0 + queries_match_count[i]);
-    }
-
-    return score/(log(8.5 + num_of_word_in_a_line));
-}
-
-void calculating_statistics_for_scoring(int queries_match_count[], int query_num, char *queries[], line_t line){
-
-    // count number of matches query by query
-    for (int i = 1; i <query_num; i++){
-        // count current query matched prefix in a line
-        queries_match_count[i - 1] = count_query_match(queries[i], line);
-    }
-
-    return;
-}
-
-int count_query_match(char *query, line_t line){
-    int count = 0;
-
-    for (int i = 0; i < line.word_count; i++){
-        if (is_prefix_matched(query, line.words[i].word) == TRUE){
-            count++;
-        }
-    }
-
-    return count;
-}
-
-bool is_prefix_matched(char *query, char *word){
-    int query_len = strlen(query);
-
-    if (strlen(word) < query_len){
-        return FALSE;
-    }
-
-    for (int i = 0; i < query_len; i++){
-        if (query[i] != tolower(word[i]))
-            return FALSE;
-    }
-
-    return TRUE;
 }
 
 text_t stage2(){
@@ -176,10 +127,15 @@ text_t stage2(){
 
     // //keep reading words into text line by line, till the end of a file
     while ((flag_of_line = read_by_line(&text.lines[text.line_index], text.line_index)) != EOF){
+    //     /*if we finish reading a line, then we need to create a new line*/
+    //     if (flag_of_line == NEWLINE){
+    //         // update text to move to the reading task of next line
+
             print_line_summary( text.lines[text.line_index].line_index ,
                                 text.lines[text.line_index].word_count,
                                 text.lines[text.line_index].byte_count);
             update_text(&text);
+    //    }
     }
 
     return text;
@@ -327,6 +283,7 @@ void add_a_new_line_char(){
     printf("\n");
 }
 
+/*the offcial mygetchar()*/
 int mygetchar() {
     int c;
     while ((c=getchar())=='\r') {
