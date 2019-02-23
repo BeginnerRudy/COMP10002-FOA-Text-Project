@@ -41,6 +41,7 @@ stdlib.h provides {
 #define NEWLINE '\n'
 #define KEEP_READING 'k'
 #define NULL_BYTE '\0'
+#define MAX_LINE_REPRESENT 5
 // Define alias, TRUE for 1 as well as FALSE for 0.
 #define TRUE 1
 #define FALSE 0
@@ -102,27 +103,74 @@ double score_a_line(int num_of_word_in_a_line, int queries_match_count[], int qu
 void calculating_statistics_for_scoring(int queries_match_count[], int query_num, char *queries[], line_t line);
 int count_query_match(char *query, line_t line);
 bool is_prefix_matched(char *query, char *word);
+void stage4(text_t *text);
+void selection_sort(text_t *text);
+void swap(line_t *p, line_t *q);
+void print_top5_scored_lines(text_t text);
 /***************The main function started*************************************/
 int
 main(int argc, char *argv[]) {
     text_t text;
 
     // run stage 1, if stage1 returns FALSE, terminate this program.
-    if (!stage1(argc, argv)){
+    if (!stage1(argc, argv))
         exit(EXIT_FAILURE);
-    }
-
     stage_separation();
 
     // run stage 2
     text = stage2();
-
     stage_separation();
 
     // run stage 3
     stage3(&text, argc, argv);
+    stage_separation();
+
+    // run stage4
+    stage4(&text);
 
     return 0;
+}
+
+void stage4(text_t *text){
+    //sort the text depend on the score of each line
+    selection_sort(text);
+
+    //print out the top 5 lines
+    print_top5_scored_lines(*text);
+}
+
+void selection_sort(text_t *text){
+    for (int i = 1; i < text->line_index; i++){
+        for (int j = i + 1; j > 0 && text->lines[j].score >= text->lines[j - 1].score; j--){
+            swap(&text->lines[j], &text->lines[j - 1]);
+        }
+    }
+}
+
+void swap(line_t *p, line_t *q){
+    line_t temp = *p;
+    *p = *q;
+    *q = temp;
+}
+
+void print_top5_scored_lines(text_t text){
+    if (text.line_index >= 5){
+        for (int i = 0; i < MAX_LINE_REPRESENT && text.lines[i].score > 0; i++){
+            printf("S4: line %d, score = %.3f\n", text.lines[i].line_index, text.lines[i].score);
+            for (int j = 0; j < text.lines[i].word_count; j++){
+                printf("%s ", text.lines[i].words[j].word);
+            }
+            add_a_new_line_char();
+        }
+    }else{
+        for (int i = 0; i < text.line_index && text.lines[i].score > 0; i++){
+            printf("S4: line %d, score = %.3f\n", text.lines[i].line_index, text.lines[i].score);
+            for (int j = 0; j < text.lines[i].word_count; j++){
+                printf("%s ", text.lines[i].words[j].word);
+            }
+            add_a_new_line_char();
+        }
+    }
 }
 
 void stage3(text_t *text, int query_num, char* queries[]){
