@@ -84,7 +84,7 @@ int count_query_match(char *query, line_t line);
 bool is_prefix_matched(char *query, char *word);
 /***************The main function started*************************************/
 int
-main(int argc, char *argv[]) {
+main(int argc, char *argv[]) { 
     text_t text;
 
     // run stage 1, if stage1 returns FALSE, terminate this program.
